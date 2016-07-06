@@ -1,0 +1,10 @@
+{
+  "generator-nuxeo": {
+    "promptValues": {
+      "parent_package": "nuxeo.unzip.file",
+      "parent_artifact": "nuxeo-unzip-file-parent",
+      "package": "nuxeo.unzip.file"
+    },
+    "multi": true
+  }
+}
