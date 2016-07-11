@@ -41,7 +41,7 @@ public class UnzipFile {
     	String tmpDir = Environment.getDefault().getTemp().getPath();
     	Path tmpDirPath = tmpDir != null ? Paths.get(tmpDir) : null;
     	Path outDirPath;
-    	DocumentModel docRootFolder;
+
     	DocumentModel docFolder;
 		try {
 			outDirPath = tmpDirPath != null ? Files.createTempDirectory(tmpDirPath, "html5") : Framework.createTempDirectory(null);			
@@ -75,19 +75,24 @@ public class UnzipFile {
 	       		if(fileName.startsWith("__MACOSX/") || fileName.startsWith(".") || fileName.endsWith(".DS_Store")){
 	       			ze = zis.getNextEntry();
 	       			continue;
-	       		}
+	       		}	       		
 	       		
-	       		if(ze.isDirectory()){	       			
+	       		String path = fileName.lastIndexOf("/") == -1 ? "" : fileName.substring(0, fileName.lastIndexOf("/"));
+	       			       		
+	       		if(ze.isDirectory()){
+	       			
+	       			path = path.indexOf("/") ==-1 ? "" : path;
+	       			
 	       			File newFile = new File(outDirPath.toString() + File.separator + fileName);
 	       			newFile.mkdirs();
 	       			
-	       			logger.error("Parent path for Folder: "+ parentDocument.getPathAsString());
-	       			docFolder = session.createDocumentModel(parentDocument.getPathAsString(), fileName.split("/")[fileName.split("/").length-1], "Folder");
+	       			logger.error("Parent path for Folder: "+ parentDocument.getPathAsString()+"/"+path);
+	       			docFolder = session.createDocumentModel(parentDocument.getPathAsString()+"/"+path, fileName.split("/")[fileName.split("/").length-1], "Folder");
 	       			docFolder.setProperty("dublincore", "title", fileName.split("/")[fileName.split("/").length-1]);
 	       			docFolder = session.createDocument(docFolder);
 		            session.saveDocument(docFolder);
-		            parent = docFolder.getRef();
-		            parentDocument = session.getDocument(parent);
+		            //parent = docFolder.getRef();
+		            //parentDocument = session.getDocument(parent);
 	       			ze = zis.getNextEntry();
 	       			continue;
 	       		}	       		
@@ -106,7 +111,7 @@ public class UnzipFile {
 	            
 	            FileBlob blob = new FileBlob(newFile, mimeType);
 	            logger.error("Parent path for File: "+ parentDocument.getPathAsString());
-	            DocumentModel doc = session.createDocumentModel(parentDocument.getPathAsString(), fileName.split("/")[fileName.split("/").length-1], "File");
+	            DocumentModel doc = session.createDocumentModel(parentDocument.getPathAsString()+"/"+path, fileName.split("/")[fileName.split("/").length-1], "File");
 	            doc.setProperty("dublincore", "title", fileName.split("/")[fileName.split("/").length-1]);
 	            doc = session.createDocument(doc);	              
 	            doc.setPropertyValue("file:content", (Serializable) blob);	          
