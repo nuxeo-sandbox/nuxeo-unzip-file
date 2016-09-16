@@ -23,12 +23,6 @@ cd nuxeo-unzip
 mvn clean install
 ```
 
-#### WARNING
-
-* As of "today" (Sept. 2016), unit tests are OK when ran from Eclipse, not from Maven. You should build with the `-DskipTests=true` switch.
-* The Nuxeo Packaged generated contains way too much libraries, this also has to be sorted out. In the meantime, you can just build the core and drop the jar in the "bundles" directory of your Nuxeo server.
-
-
 ## Support
 
 **These features are sand-boxed and not yet part of the Nuxeo Production platform.**
