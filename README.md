@@ -4,7 +4,11 @@
 This add-on for Nuxeo platform extracts a .zip file and create the corresponding documents, building the same tree structure.
 
 ## Usage
-The plug-in provides an operation, `Document.UnzipFile` that expects a `Document` as input, extracts its blob stored in `file:content` and creates the same structure in the target (the current folder if the `target` parameter isn't provided. `target` can be a Document UUID or it's path.
+The plug-in provides an operation, `Document.UnzipFile` that:
+
+* Expects a `Document` as input
+* Extracts its blob stored in the `xpath` parameter (default value: `file:content`)
+* And creates the same structure in the target (the current folder if the `target` parameter isn't provided. `target` can be a Document UUID or it's path.
 
 
 
@@ -18,6 +22,11 @@ git clone https://github.com/nuxeo-sandbox/nuxeo-unzip-file.git
 cd nuxeo-unzip
 mvn clean install
 ```
+
+#### WARNING
+
+* As of "today" (Sept. 2016), unit tests are OK when ran from Eclipse, not from Maven. You should build with the `-DskipTests=true` switch.
+* The Nuxeo Packaged generated contains way too much libraries, this also has to be sorted out. In the meantime, you can just build the core and drop the jar in the "bundles" directory of your Nuxeo server.
 
 
 ## Support

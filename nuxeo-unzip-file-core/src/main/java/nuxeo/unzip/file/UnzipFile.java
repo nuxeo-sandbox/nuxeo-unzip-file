@@ -3,16 +3,15 @@ package nuxeo.unzip.file;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tika.Tika;
 import org.nuxeo.common.Environment;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Context;
@@ -22,16 +21,20 @@ import org.nuxeo.ecm.automation.core.annotations.Param;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentRef;
+import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.blob.binary.BinaryBlob;
+import org.nuxeo.ecm.platform.filemanager.api.FileManager;
 import org.nuxeo.runtime.api.Framework;
+
 /**
  *
  */
-@Operation(id=UnzipFile.ID, category=Constants.CAT_DOCUMENT, label="Unzip", description="Unzip file and create the same structure in the target (the current folder if target isn't provided).")
+@Operation(id = UnzipFile.ID, category = Constants.CAT_DOCUMENT, label = "Unzip", description = "Unzip file and create the same structure in the target (the current folder if target isn't provided).")
 public class UnzipFile {
 
     public static final String ID = "Document.UnzipFile";
+
     private Log logger = LogFactory.getLog(UnzipFile.class);
 
     @Context
@@ -40,103 +43,120 @@ public class UnzipFile {
     @Param(name = "target", required = false)
     protected DocumentModel target;
 
+    @Param(name = "xpath", required = false, values = { "file:content" })
+    protected String xpath;
+
     @OperationMethod
-    public DocumentModel run(DocumentModel input){
-    	String tmpDir = Environment.getDefault().getTemp().getPath();
-    	Path tmpDirPath = tmpDir != null ? Paths.get(tmpDir) : null;
-    	Path outDirPath;
+    public DocumentModel run(DocumentModel input) {
+        String tmpDir = Environment.getDefault().getTemp().getPath();
+        Path tmpDirPath = tmpDir != null ? Paths.get(tmpDir) : null;
+        Path outDirPath = null;
+        String dcTitle;
+        File mainParentFolder = null;
 
-    	DocumentModel docFolder;
-		try {
-			outDirPath = tmpDirPath != null ? Files.createTempDirectory(tmpDirPath, "html5") : Framework.createTempDirectory(null);
-		   	byte[] buffer = new byte[1024];
-	    	int len = 0;
+        DocumentModel docFolder;
+        try {
+            outDirPath = tmpDirPath != null ? Files.createTempDirectory(
+                    tmpDirPath, "NxUnzip")
+                    : Framework.createTempDirectory(null);
+            byte[] buffer = new byte[4096];
+            int len = 0;
 
-	       	//create output directory if it doesn't exist
-	    	File folder = new File(outDirPath.toString());
+            // create output directory if it doesn't exist
+            File folder = new File(outDirPath.toString());
+            if (!folder.exists()) {
+                folder.mkdir();
+            }
+            mainParentFolder = folder;
 
-	    	if(!folder.exists()){
-	       		folder.mkdir();
-	       	}
+            DocumentRef parent = input.getParentRef();
+            DocumentModel parentDocument;
 
-	       	DocumentRef parent = input.getParentRef();
-	       	DocumentModel parentDocument;
+            if (target == null) {
+                parentDocument = session.getDocument(parent);
+            } else {
+                parentDocument = target;
+            }
 
-	       	if(target==null){
-	       	    parentDocument = session.getDocument(parent);
-	       	} else {
-	       	    parentDocument = target;
-	       	}
+            // copy the input file on temp folder
+            if (StringUtils.isBlank(xpath)) {
+                xpath = "file:content";
+            }
+            BinaryBlob zipBlob = (BinaryBlob) input.getPropertyValue(xpath);
 
+            // get the zip file content
+            ZipInputStream zis = new ZipInputStream(zipBlob.getStream());
 
-	       	//copy the input file on temp folder
-	       	BinaryBlob zipBlob = (BinaryBlob) input.getPropertyValue("file:content");
+            // get the zipped file list entry
+            ZipEntry ze = zis.getNextEntry();
 
-	       	//get the zip file content
-	       	ZipInputStream zis = new ZipInputStream(zipBlob.getStream());
+            while (ze != null) {
 
-	       	//get the zipped file list entry
-	       	ZipEntry ze = zis.getNextEntry();
+                String fileName = ze.getName();
+                if (fileName.startsWith("__MACOSX/")
+                        || fileName.startsWith(".")
+                        || fileName.endsWith(".DS_Store")) {
+                    ze = zis.getNextEntry();
+                    continue;
+                }
 
+                dcTitle = fileName.split("/")[fileName.split("/").length - 1];
+                int idx = fileName.lastIndexOf("/");
+                String path = idx == -1 ? "" : fileName.substring(0, idx);
 
+                if (ze.isDirectory()) {
 
-	       	while(ze!=null){
+                    if (path.indexOf("/") == -1) {
+                        path = "";
+                    } else {
+                        path = path.substring(0, path.lastIndexOf("/"));
+                    }
 
-	       		String fileName = ze.getName();
-	       		if(fileName.startsWith("__MACOSX/") || fileName.startsWith(".") || fileName.endsWith(".DS_Store")){
-	       			ze = zis.getNextEntry();
-	       			continue;
-	       		}
+                    File newFile = new File(outDirPath.toString()
+                            + File.separator + fileName);
+                    newFile.mkdirs();
 
-	       		String path = fileName.lastIndexOf("/") == -1 ? "" : fileName.substring(0, fileName.lastIndexOf("/"));
+                    logger.error("Parent path for Folder: "
+                            + parentDocument.getPathAsString() + "/" + path);
+                    docFolder = session.createDocumentModel(
+                            parentDocument.getPathAsString() + "/" + path,
+                            dcTitle, "Folder");
+                    docFolder.setProperty("dublincore", "title", dcTitle);
+                    docFolder = session.createDocument(docFolder);
+                    session.saveDocument(docFolder);
+                    ze = zis.getNextEntry();
+                    continue;
+                }
 
-	       		if(ze.isDirectory()){
+                File newFile = new File(outDirPath.toString() + File.separator
+                        + fileName);
+                FileOutputStream fos = new FileOutputStream(newFile);
+                while ((len = zis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
 
-	       			path = path.indexOf("/") ==-1 ? "" : path;
+                fos.close();
+                ze = zis.getNextEntry();
 
-	       			File newFile = new File(outDirPath.toString() + File.separator + fileName);
-	       			newFile.mkdirs();
+                FileManager fileManager = Framework.getLocalService(FileManager.class);
+                FileBlob blob = new FileBlob(newFile);
+                fileManager.createDocumentFromBlob(session, blob,
+                        parentDocument.getPathAsString() + "/" + path, true,
+                        blob.getFilename());
+            }
 
-	       			logger.error("Parent path for Folder: "+ parentDocument.getPathAsString()+"/"+path);
-	       			docFolder = session.createDocumentModel(parentDocument.getPathAsString()+"/"+path, fileName.split("/")[fileName.split("/").length-1], "Folder");
-	       			docFolder.setProperty("dublincore", "title", fileName.split("/")[fileName.split("/").length-1]);
-	       			docFolder = session.createDocument(docFolder);
-		            session.saveDocument(docFolder);
-		            //parent = docFolder.getRef();
-		            //parentDocument = session.getDocument(parent);
-	       			ze = zis.getNextEntry();
-	       			continue;
-	       		}
-	       		File newFile = new File(outDirPath.toString() + File.separator + fileName);
-	            FileOutputStream fos = new FileOutputStream(newFile);
-	            while ((len = zis.read(buffer)) > 0) {
-	            	fos.write(buffer, 0, len);
-	            }
+            zis.closeEntry();
+            zis.close();
 
-	            fos.close();
-	            ze = zis.getNextEntry();
-	            Tika tika = new Tika();
-
-	            String mimeType= (tika.detect(newFile.getPath()).equals("application/javascript")) ? "text/javascript" : tika.detect(newFile.getPath());
-	            logger.error("MimeType: "+mimeType);
-
-	            FileBlob blob = new FileBlob(newFile, mimeType);
-	            logger.error("Parent path for File: "+ parentDocument.getPathAsString());
-	            DocumentModel doc = session.createDocumentModel(parentDocument.getPathAsString()+"/"+path, fileName.split("/")[fileName.split("/").length-1], "File");
-	            doc.setProperty("dublincore", "title", fileName.split("/")[fileName.split("/").length-1]);
-	            doc = session.createDocument(doc);
-	            doc.setPropertyValue("file:content", blob);
-	            doc.setPropertyValue("file:filename",fileName.split("/")[fileName.split("/").length-1]);
-	            session.saveDocument(doc);
-	       	}
-
-	        zis.closeEntry();
-	       	zis.close();
-
-       }catch(IOException ex){
-          ex.printStackTrace();
-       }
-		return input;
+        } catch (IOException ex) {
+            throw new NuxeoException("Error unzipping and ecrating documents",
+                    ex);
+        } finally {
+            if (mainParentFolder != null) {
+                org.apache.commons.io.FileUtils.deleteQuietly(mainParentFolder);
+            }
+        }
+        return input;
     }
 
 }
