@@ -1,14 +1,5 @@
 package nuxeo.unzip.file;
 
-import static org.junit.Assert.*;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.inject.Inject;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,17 +23,27 @@ import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.test.runner.LocalDeploy;
 
+import javax.inject.Inject;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import static org.junit.Assert.*;
+
 @RunWith(FeaturesRunner.class)
 @Features(AutomationFeature.class)
 @RepositoryConfig(init = DefaultRepositoryInit.class, cleanup = Granularity.METHOD)
-@Deploy({ "org.nuxeo.ecm.platform.types.api",
-        "org.nuxeo.ecm.platform.types.core",
-        "org.nuxeo.ecm.platform.filemanager.core",
-        "org.nuxeo.ecm.platform.video.core",
-        "org.nuxeo.ecm.platform.video.convert",
-        "org.nuxeo.ecm.platform.picture.core",
-        "nuxeo.unzip.file.nuxeo-unzip-file-core" })
-@LocalDeploy({ "nuxeo.unzip.file.nuxeo-unzip-file-core:OSGI-INF/disable-listeners-contrib.xml" })
+@Deploy({
+    "org.nuxeo.ecm.platform.video.core",
+    "org.nuxeo.ecm.platform.picture.core",
+    "org.nuxeo.ecm.platform.filemanager.core",
+    "org.nuxeo.ecm.platform.types.core",
+    "nuxeo.unzip.file.nuxeo-unzip-file-core"
+})
+@LocalDeploy({
+    "nuxeo.unzip.file.nuxeo-unzip-file-core:OSGI-INF/disable-listeners-contrib.xml"
+})
 public class TestUnzipFile {
 
     public static final String ZIPFILE = "nuxeo-unzip-test.zip";
