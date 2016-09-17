@@ -52,16 +52,12 @@ import static org.junit.Assert.*;
 @RunWith(FeaturesRunner.class)
 @Features(AutomationFeature.class)
 @RepositoryConfig(init = DefaultRepositoryInit.class, cleanup = Granularity.METHOD)
-@Deploy({
-    "org.nuxeo.ecm.platform.video.core",
-    "org.nuxeo.ecm.platform.picture.core",
-    "org.nuxeo.ecm.platform.filemanager.core",
-    "org.nuxeo.ecm.platform.types.core",
-    "nuxeo.unzip.file.nuxeo-unzip-file-core"
-})
-@LocalDeploy({
-    "nuxeo.unzip.file.nuxeo-unzip-file-core:OSGI-INF/disable-listeners-contrib.xml"
-})
+@Deploy({ "org.nuxeo.ecm.platform.video.core",
+        "org.nuxeo.ecm.platform.picture.core",
+        "org.nuxeo.ecm.platform.filemanager.core",
+        "org.nuxeo.ecm.platform.types.core",
+        "nuxeo.unzip.file.nuxeo-unzip-file-core" })
+@LocalDeploy({ "nuxeo.unzip.file.nuxeo-unzip-file-core:OSGI-INF/disable-listeners-contrib.xml" })
 public class TestUnzipFile {
 
     public static final String ZIPFILE = "nuxeo-unzip-test.zip";
@@ -132,7 +128,7 @@ public class TestUnzipFile {
         String testPath;
         DocumentModel testDoc;
 
-        for(Entry<String, String> entry : PATHS_AND_DOCTYPES.entrySet()) {
+        for (Entry<String, String> entry : PATHS_AND_DOCTYPES.entrySet()) {
             String subPath = entry.getKey();
             String expectedType = entry.getValue();
 
