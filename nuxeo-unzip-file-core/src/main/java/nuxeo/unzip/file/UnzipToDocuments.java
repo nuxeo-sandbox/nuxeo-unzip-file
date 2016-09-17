@@ -15,7 +15,6 @@
  *
  * Contributors:
  *     Michael Gena
- *     Frederic Vadon
  *     Thibaud Arguillere
  */
 package nuxeo.unzip.file;
@@ -29,50 +28,44 @@ import java.nio.file.Paths;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.common.Environment;
-import org.nuxeo.ecm.automation.core.Constants;
-import org.nuxeo.ecm.automation.core.annotations.Context;
-import org.nuxeo.ecm.automation.core.annotations.Operation;
-import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
-import org.nuxeo.ecm.automation.core.annotations.Param;
+import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
-import org.nuxeo.ecm.core.api.DocumentRef;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
-import org.nuxeo.ecm.core.blob.binary.BinaryBlob;
 import org.nuxeo.ecm.platform.filemanager.api.FileManager;
 import org.nuxeo.runtime.api.Framework;
 
 /**
+ * TODO: This code has room for optimization.
  *
+ * @since 8.3
  */
-@Operation(id = UnzipFile.ID, category = Constants.CAT_DOCUMENT, label = "Unzip", description = "Unzip file and create the same structure in the target (the current folder if target isn't provided).")
-public class UnzipFile {
+public class UnzipToDocuments {
 
-    public static final String ID = "Document.UnzipFile";
+    protected static Log logger = LogFactory.getLog(UnzipToDocuments.class);
 
-    private Log logger = LogFactory.getLog(UnzipFile.class);
+    /**
+     *
+     * @param parentDocument
+     * @param zipBlob
+     * @return the main document (Folder) containing the unzipped data
+     * @since 8.3
+     */
+    public static DocumentModel run(DocumentModel parentDocument, Blob zipBlob) {
 
-    @Context
-    protected CoreSession session;
-
-    @Param(name = "target", required = false)
-    protected DocumentModel target;
-
-    @Param(name = "xpath", required = false, values = { "file:content" })
-    protected String xpath;
-
-    @OperationMethod
-    public DocumentModel run(DocumentModel input) {
         String tmpDir = Environment.getDefault().getTemp().getPath();
         Path tmpDirPath = tmpDir != null ? Paths.get(tmpDir) : null;
         Path outDirPath = null;
         String dcTitle;
-        File mainParentFolder = null;
+        File mainParentFolderOnDisk = null;
+        DocumentModel mainUnzippedFolderDoc = null;
+        boolean isMainUzippedFolderDoc = false;
+
+        CoreSession session = parentDocument.getCoreSession();
 
         DocumentModel docFolder;
         try {
@@ -87,22 +80,7 @@ public class UnzipFile {
             if (!folder.exists()) {
                 folder.mkdir();
             }
-            mainParentFolder = folder;
-
-            DocumentRef parent = input.getParentRef();
-            DocumentModel parentDocument;
-
-            if (target == null) {
-                parentDocument = session.getDocument(parent);
-            } else {
-                parentDocument = target;
-            }
-
-            // copy the input file on temp folder
-            if (StringUtils.isBlank(xpath)) {
-                xpath = "file:content";
-            }
-            BinaryBlob zipBlob = (BinaryBlob) input.getPropertyValue(xpath);
+            mainParentFolderOnDisk = folder;
 
             // get the zip file content
             ZipInputStream zis = new ZipInputStream(zipBlob.getStream());
@@ -127,6 +105,7 @@ public class UnzipFile {
                 if (ze.isDirectory()) {
 
                     if (path.indexOf("/") == -1) {
+                        isMainUzippedFolderDoc = true;
                         path = "";
                     } else {
                         path = path.substring(0, path.lastIndexOf("/"));
@@ -136,14 +115,18 @@ public class UnzipFile {
                             + File.separator + fileName);
                     newFile.mkdirs();
 
-                    logger.error("Parent path for Folder: "
-                            + parentDocument.getPathAsString() + "/" + path);
                     docFolder = session.createDocumentModel(
                             parentDocument.getPathAsString() + "/" + path,
                             dcTitle, "Folder");
                     docFolder.setProperty("dublincore", "title", dcTitle);
                     docFolder = session.createDocument(docFolder);
                     session.saveDocument(docFolder);
+
+                    if (isMainUzippedFolderDoc && mainUnzippedFolderDoc == null) {
+                        mainUnzippedFolderDoc = docFolder;
+                        isMainUzippedFolderDoc = false;
+                    }
+
                     ze = zis.getNextEntry();
                     continue;
                 }
@@ -168,15 +151,16 @@ public class UnzipFile {
             zis.closeEntry();
             zis.close();
 
-        } catch (IOException ex) {
-            throw new NuxeoException("Error unzipping and ecrating documents",
-                    ex);
+        } catch (IOException e) {
+            throw new NuxeoException(
+                    "Error while unzipping and creating Documents", e);
         } finally {
-            if (mainParentFolder != null) {
-                org.apache.commons.io.FileUtils.deleteQuietly(mainParentFolder);
+            if (mainParentFolderOnDisk != null) {
+                org.apache.commons.io.FileUtils.deleteQuietly(mainParentFolderOnDisk);
             }
         }
-        return input;
+
+        return mainUnzippedFolderDoc;
     }
 
 }

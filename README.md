@@ -1,14 +1,24 @@
 # nuxeo-unzip-file
 ====
 
-This add-on for Nuxeo platform extracts a .zip file and create the corresponding documents, building the same tree structure.
+This add-on for [Nuxeo platform](http://www.nuxeo.com) extracts a .zip file and creates the corresponding Documents, building the same tree structure.
+
+The `FileManager` service is used to create the Documents based on the type of the files (so for example, it creates a `File` for a .pdf, a `Picture` for a .jpg, ...).
+
+<div style="margin-left: 50px; font-style: italic;">
+Notice that Nuxeo being an extensible platform, you may have overriden the default behavior, so for example you create a custom `MyCustomDesign` Document for image filed.
+</div>
 
 ## Usage
 The plug-in provides an operation, `Document.UnzipFile` that:
 
-* Expects a `Document` as input
-* Extracts its blob stored in the `xpath` parameter (default value: `file:content`)
-* And creates the same structure in the target (the current folder if the `target` parameter isn't provided. `target` can be a Document UUID or it's path.
+* Expects a `Document` or a `Blob` as input and creates the same structure in the target document.
+* When the input is a `Document`:
+  * Parameter `target` is optional. If not used, the parent of the input Document is used
+  * The zip blob is read in the `xpath` parameter (default value: `file:content`) of the input Document
+* When the input is a `Blob`:
+  * The `target` parameter is required
+  * `xpath` is ignored
 
 
 

@@ -42,6 +42,7 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.test.runner.LocalDeploy;
 
 import javax.inject.Inject;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,9 +59,11 @@ import static org.junit.Assert.*;
         "org.nuxeo.ecm.platform.types.core",
         "nuxeo.unzip.file.nuxeo-unzip-file-core" })
 @LocalDeploy({ "nuxeo.unzip.file.nuxeo-unzip-file-core:OSGI-INF/disable-listeners-contrib.xml" })
-public class TestUnzipFile {
+public class TestUnzipFileToDocuments {
 
     public static final String ZIPFILE = "nuxeo-unzip-test.zip";
+
+    protected FileBlob zipFileBlob;
 
     protected DocumentModel testDocsFolder;
 
@@ -86,7 +89,7 @@ public class TestUnzipFile {
         PATHS_AND_DOCTYPES.put("/nuxeo-unzip-test/f2/Picture.jpg", "Picture");
 
         File zipFile = FileUtils.getResourceFileFromContext(ZIPFILE);
-        FileBlob zipFileBlob = new FileBlob(zipFile);
+        zipFileBlob = new FileBlob(zipFile);
 
         testDocsFolder = coreSession.createDocumentModel("/", "test-unzip",
                 "Folder");
@@ -111,18 +114,7 @@ public class TestUnzipFile {
         coreSession.save();
     }
 
-    @Test
-    public void shouldCallTheOperation() throws OperationException {
-
-        OperationChain chain;
-        OperationContext ctx = new OperationContext(coreSession);
-        assertNotNull(ctx);
-
-        ctx.setInput(documentWithZip);
-        chain = new OperationChain("testChain");
-        chain.add(UnzipFile.ID);
-        DocumentModel result = (DocumentModel) automationService.run(ctx, chain);
-        assertNotNull(result);
+    protected void checkZippedFolderContent() {
 
         String mainParentPath = testDocsFolder.getPathAsString();
         String testPath;
@@ -141,11 +133,58 @@ public class TestUnzipFile {
                 assertTrue("Document " + subPath + " was not created", false);
             }
         }
+    }
+
+    @Test
+    public void testUnzipToDocuments() throws Exception {
+
+        DocumentModel mainUnzippedFolderDoc;
+
+        mainUnzippedFolderDoc = UnzipToDocuments.run(testDocsFolder,
+                zipFileBlob);
+        assertNotNull(mainUnzippedFolderDoc);
+        assertEquals("nuxeo-unzip-test", mainUnzippedFolderDoc.getTitle());
+
+        checkZippedFolderContent();
+    }
+
+    @Test
+    public void testOperation() throws OperationException {
+
+        OperationChain chain;
+        OperationContext ctx = new OperationContext(coreSession);
+        assertNotNull(ctx);
+
+        ctx.setInput(documentWithZip);
+        chain = new OperationChain("testChain");
+        chain.add(UnzipFileFoDocumentsOp.ID);
+        DocumentModel result = (DocumentModel) automationService.run(ctx, chain);
+        assertNotNull(result);
+
+        checkZippedFolderContent();
 
     }
 
     @Test
-    public void shouldCallWithParameters() throws OperationException {
+    public void testOperationShouldFailWithBlobAndNoTarget()
+            throws OperationException {
+
+        OperationChain chain;
+        OperationContext ctx = new OperationContext(coreSession);
+        assertNotNull(ctx);
+
+        ctx.setInput(zipFileBlob);
+        chain = new OperationChain("testChain");
+        chain.add(UnzipFileFoDocumentsOp.ID);
+        try {
+            @SuppressWarnings("unused")
+            DocumentModel ignore = (DocumentModel) automationService.run(ctx,
+                    chain);
+        } catch (Exception e) {
+            // Automation does not just forward the IllegalArgumentException, it
+            // is embedded in another exception
+            assertTrue(e.getMessage().indexOf("IllegalArgumentException") > -1);
+        }
 
     }
 }
