@@ -37,7 +37,7 @@ import org.nuxeo.ecm.core.api.DocumentRef;
 @Operation(id = UnzipFileFoDocumentsOp.ID, category = Constants.CAT_DOCUMENT, label = "Unzip and create documents", description = "Unzip file and create the same structure in the target (the current folder if target isn't provided). When using a blob as input, the target parameter is required. The operation does nothing if the input is null.")
 public class UnzipFileFoDocumentsOp {
 
-    public static final String ID = "Document.UnzipFileToDicuments";
+    public static final String ID = "Document.UnzipFileToDocuments";
 
     @Context
     protected CoreSession session;
