@@ -40,6 +40,9 @@ import org.nuxeo.ecm.platform.filemanager.api.FileManager;
 import org.nuxeo.runtime.api.Framework;
 
 /**
+ * Creates Documents, in a hierarchical way, copying the tree-structure stored
+ * in the zip file
+ *
  * TODO: This code has room for optimization.
  *
  * @since 8.3
@@ -49,13 +52,15 @@ public class UnzipToDocuments {
     protected static Log logger = LogFactory.getLog(UnzipToDocuments.class);
 
     /**
+     * Unzip the file and creates the Documents
      *
      * @param parentDocument
      * @param zipBlob
      * @return the main document (Folder) containing the unzipped data
      * @since 8.3
      */
-    public static DocumentModel run(DocumentModel parentDocument, Blob zipBlob) {
+    public static DocumentModel run(DocumentModel parentDocument, Blob zipBlob)
+            throws NuxeoException {
 
         String tmpDir = Environment.getDefault().getTemp().getPath();
         Path tmpDirPath = tmpDir != null ? Paths.get(tmpDir) : null;

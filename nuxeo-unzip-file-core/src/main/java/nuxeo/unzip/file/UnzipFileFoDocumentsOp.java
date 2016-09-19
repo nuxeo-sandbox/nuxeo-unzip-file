@@ -32,6 +32,9 @@ import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentRef;
 
 /**
+ * This operation extracts the zip file (either a Blob input or a Blob field in
+ * a Document) and creates Documents according to their types and preserving the
+ * hierarchy.
  *
  */
 @Operation(id = UnzipFileFoDocumentsOp.ID, category = Constants.CAT_DOCUMENT, label = "Unzip and create documents", description = "Unzip file and create the same structure in the target (the current folder if target isn't provided). When using a blob as input, the target parameter is required. The operation does nothing if the input is null.")
@@ -51,7 +54,7 @@ public class UnzipFileFoDocumentsOp {
     @OperationMethod
     public DocumentModel run(DocumentModel input) {
 
-        if(input == null) {
+        if (input == null) {
             return input;
         }
 
@@ -69,7 +72,7 @@ public class UnzipFileFoDocumentsOp {
         }
         Blob zipBlob = (Blob) input.getPropertyValue(xpath);
 
-        /*ignore = */UnzipToDocuments.run(parentDocument, zipBlob);
+        /* ignore = */UnzipToDocuments.run(parentDocument, zipBlob);
 
         return input;
     }
@@ -77,15 +80,16 @@ public class UnzipFileFoDocumentsOp {
     @OperationMethod
     public Blob run(Blob input) {
 
-        if(input == null) {
+        if (input == null) {
             return input;
         }
 
-        if(target == null) {
-            throw new IllegalArgumentException("When receiving a Blob, the target parameter cannot be empty");
+        if (target == null) {
+            throw new IllegalArgumentException(
+                    "When receiving a Blob, the target parameter cannot be empty");
         }
 
-        /*ignore = */UnzipToDocuments.run(target, input);
+        /* ignore = */UnzipToDocuments.run(target, input);
 
         return input;
     }

@@ -6,11 +6,32 @@ This add-on for [Nuxeo platform](http://www.nuxeo.com) extracts a .zip file and 
 The `FileManager` service is used to create the Documents based on the type of the files (so for example, it creates a `File` for a .pdf, a `Picture` for a .jpg, ...).
 
 <div style="margin-left: 50px; font-style: italic;">
-Notice that Nuxeo being an extensible platform, you may have overriden the default behavior, so for example you create a custom `MyCustomDesign` Document for image filed.
+Notice that Nuxeo being an extensible platform, you may have overriden the default behavior, so for example you create a custom `MyCustomDesign` Document for an image file.
 </div>
 
 ## Usage
-The plug-in provides an operation, `Document.UnzipFile` that:
+The plug-in provides:
+
+* Automatic extraction when a .zip file is uploaded to Nuxeo (whatever the way: End user in the UI, REST API, server-side importation, ...). There is an XML contribution to the `FileManager`.
+* And an operation, `Document.UnzipFileToDocuments` that lets you trigger the extraction.
+
+#### Automatic Extraction
+
+The plugin contains an XML contribution to the `FileManager` that makes it possible to automatically extract the files of the zip file and create the documents and their structure.
+
+The contribution makes sure the extraction will be run _after_ some specific other contributions that handle .zip file: The `CSVImporter` (the .zip file contains a .csv file) and the `ExportedZipImporter` (a Nuxeo tree structure was exported and is now imported).
+
+If you want to store your .zip files as regular `File` documents, and later maybe use the `Document.UnzipFileToDocuments` operation to extract the files, you can deactivate the contribution. In Nuxeo Studio > Advanced Settings > XML Extensions, create a new contribution ("DisableZipAutoExtract" for example) and paste the following:
+
+```
+<extension
+    target="org.nuxeo.ecm.platform.filemanager.service.FileManagerService"
+    point="plugins">
+  <plugin name="UnzipToDocuments" enabled="false"></plugin>
+</extension>
+``` 
+
+#### The `Document.UnzipFileToDocuments` operation:
 
 * Expects a `Document` or a `Blob` as input and creates the same structure in the target document.
 * When the input is a `Document`:
@@ -32,6 +53,8 @@ git clone https://github.com/nuxeo-sandbox/nuxeo-unzip-file.git
 cd nuxeo-unzip
 mvn clean install
 ```
+
+The Nuxeo Package to install on your server is in target/
 
 ## Support
 

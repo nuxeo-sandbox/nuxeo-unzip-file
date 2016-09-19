@@ -9,7 +9,7 @@
 
   <groupId>nuxeo.unzip.file</groupId>
   <artifactId>nuxeo-unzip-file-parent</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>2.0-SNAPSHOT</version>
   <name>Nuxeo unzip file parent</name>
   <description>Unzip file and create the folder structure.</description>
   <packaging>pom</packaging>
@@ -19,28 +19,20 @@
     <module>nuxeo-unzip-file-marketplace</module>
   </modules>
 
-  <scm>
-  </scm>
-
-  <licenses>
-  </licenses>
-
-  <mailingLists>
-  </mailingLists>
-
-  <issueManagement>
-  </issueManagement>
-
-  <ciManagement>
-  </ciManagement>
-
-  <developers>
-  </developers>
-
-  <distributionManagement>
-  </distributionManagement>
-
-
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>nuxeo.unzip.file</groupId>
+        <artifactId>nuxeo-unzip-file-core</artifactId>
+        <version>1.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>nuxeo.unzip.file</groupId>
+        <artifactId>nuxeo-unzip-file-mp</artifactId>
+        <version>1.0-SNAPSHOT</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <repositories>
     <repository>
@@ -90,18 +82,4 @@
       </snapshots>
     </pluginRepository>
   </pluginRepositories>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>nuxeo.unzip.file</groupId>
-        <artifactId>nuxeo-unzip-file-core</artifactId>
-        <version>1.0-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>nuxeo.unzip.file</groupId>
-        <artifactId>nuxeo-unzip-file-mp</artifactId>
-        <version>1.0-SNAPSHOT</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 </project>

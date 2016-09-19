@@ -6,4 +6,5 @@ Bundle-Version: 1.0.0
 Bundle-Name: nuxeo-unzip-file-core
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: nuxeo.unzip.file.nuxeo-unzip-file-core;singleton=true
-Nuxeo-Component: OSGI-INF/unzip-file-operation-contrib.xml
+Nuxeo-Component: OSGI-INF/unzip-file-operation-contrib.xml,
+ OSGI-INF/unzip-file-filemanager-contrib.xml

@@ -36,6 +36,7 @@ import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.test.DefaultRepositoryInit;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
+import org.nuxeo.ecm.platform.filemanager.api.FileManager;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
@@ -63,6 +64,8 @@ public class TestUnzipFileToDocuments {
 
     public static final String ZIPFILE = "nuxeo-unzip-test.zip";
 
+    protected File zipFile;
+
     protected FileBlob zipFileBlob;
 
     protected DocumentModel testDocsFolder;
@@ -77,8 +80,14 @@ public class TestUnzipFileToDocuments {
     @Inject
     protected AutomationService automationService;
 
+    @Inject
+    protected FileManager fileManager;
+
     @Before
     public void setup() {
+
+        assertNotNull(automationService);
+        assertNotNull(fileManager);
 
         PATHS_AND_DOCTYPES = new HashMap<String, String>();
         PATHS_AND_DOCTYPES.put("/nuxeo-unzip-test/File.pdf", "File");
@@ -88,7 +97,7 @@ public class TestUnzipFileToDocuments {
         PATHS_AND_DOCTYPES.put("/nuxeo-unzip-test/f2", "Folder");
         PATHS_AND_DOCTYPES.put("/nuxeo-unzip-test/f2/Picture.jpg", "Picture");
 
-        File zipFile = FileUtils.getResourceFileFromContext(ZIPFILE);
+        zipFile = FileUtils.getResourceFileFromContext(ZIPFILE);
         zipFileBlob = new FileBlob(zipFile);
 
         testDocsFolder = coreSession.createDocumentModel("/", "test-unzip",
@@ -185,6 +194,28 @@ public class TestUnzipFileToDocuments {
             // is embedded in another exception
             assertTrue(e.getMessage().indexOf("IllegalArgumentException") > -1);
         }
+
+    }
+
+    @Test
+    public void tesArchiveCheck() {
+
+        assertTrue(UnzipFileToDocumentsImporter.looksLikeValidZip(zipFile));
+
+        assertFalse(UnzipFileToDocumentsImporter.looksLikeValidZip(null));
+
+        File notValidZip = FileUtils.getResourceFileFromContext("not-a-valid-zip.zip");
+        assertFalse(UnzipFileToDocumentsImporter.looksLikeValidZip(notValidZip));
+    }
+
+    @Test
+    public void testImportViaFileManager() throws Exception {
+
+        DocumentModel doc = fileManager.createDocumentFromBlob(coreSession, zipFileBlob, testDocsFolder.getPathAsString(), true, "TheArchive");
+        assertTrue(doc != null);
+        assertEquals("nuxeo-unzip-test", doc.getTitle());
+
+        checkZippedFolderContent();
 
     }
 }

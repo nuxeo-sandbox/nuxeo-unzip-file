@@ -1,8 +1,8 @@
 <!-- See documentation at http://doc.nuxeo.com/x/HgIz -->
-<package type="addon" name="nuxeo-unzip-file-package" version="@VERSION@">
+<package type="addon" name="nuxeo-unzip-file" version="@VERSION@">
   <title>Nuxeo unzip file package</title>
   <description>
-    <p>Put here an HTML description of your Nuxeo Package.</p>
+    <p>Uneip a file and create the corresponding Documents</p>
   </description>
   <!-- <home-page>http://doc.nuxeo.com/</home-page> -->
   <vendor>Nuxeo</vendor>

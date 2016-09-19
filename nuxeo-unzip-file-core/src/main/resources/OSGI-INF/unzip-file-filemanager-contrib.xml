@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<component name="nuxeo.unzip.file.filemanager" version="1.0">
+
+  <extension target="org.nuxeo.ecm.platform.filemanager.service.FileManagerService" point="plugins">
+
+    <!-- High number, we want to be called after ExportedArchivePlugin and CSVArchivePlugin -->
+    <plugin name="UnzipToDocuments" class="nuxeo.unzip.file.UnzipFileToDocumentsImporter" order="50">
+      <filter>application/zip</filter>
+    </plugin>
+
+  </extension>
+
+</component>
+
