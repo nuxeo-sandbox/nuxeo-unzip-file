@@ -98,6 +98,7 @@ public class UnzipToDocuments {
                 String fileName = ze.getName();
                 if (fileName.startsWith("__MACOSX/")
                         || fileName.startsWith(".")
+                        || fileName.contentEquals("../") //Avoid hacks trying to access a directory outside the current one
                         || fileName.endsWith(".DS_Store")) {
                     ze = zis.getNextEntry();
                     continue;
