@@ -30,7 +30,7 @@
 
     <!-- Base distribution NXR -->
     <copy todir="${outdir}">
-      <artifact:file key="org.nuxeo.ecm.distribution:nuxeo-distribution-cap::zip"/>
+      <artifact:file key="org.nuxeo.ecm.distribution:nuxeo-nxr-server::zip" />
     </copy>
 
     <!-- Nuxeo bundles -->
@@ -78,7 +78,7 @@
     <!-- Your MP only needs to include files not already provided by the base distribution -->
     <nx:zipdiff
             file1="${outdir}/nxr-${maven.project.version}.zip"
-            file2="${outdir}/nuxeo-distribution-cap-${nuxeo.distribution.version}.zip"
+            file2="${maven.project.build.directory}/nuxeo-nxr-server-${nuxeo.distribution.version}.zip"
             includesfile="${outdir}/includes"
             excludesfile="${outdir}/excludesfile"
             patternsetid="sample.versus.cap"
