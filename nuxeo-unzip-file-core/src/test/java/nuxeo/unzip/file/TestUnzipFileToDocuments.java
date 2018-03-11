@@ -54,11 +54,9 @@ import static org.junit.Assert.*;
 @RunWith(FeaturesRunner.class)
 @Features(AutomationFeature.class)
 @RepositoryConfig(init = DefaultRepositoryInit.class, cleanup = Granularity.METHOD)
-@Deploy({ "org.nuxeo.ecm.platform.video.core",
-        "org.nuxeo.ecm.platform.picture.core",
-        "org.nuxeo.ecm.platform.filemanager.core",
-        "org.nuxeo.ecm.platform.types.core",
-        "nuxeo.unzip.file.nuxeo-unzip-file-core" })
+@Deploy({ "org.nuxeo.ecm.platform.video.api", "org.nuxeo.ecm.platform.video.core", "org.nuxeo.ecm.platform.picture.api",
+        "org.nuxeo.ecm.platform.picture.core", "org.nuxeo.ecm.platform.filemanager.core",
+        "org.nuxeo.ecm.platform.types.core", "org.nuxeo.ecm.platform.tag", "nuxeo.unzip.file.nuxeo-unzip-file-core" })
 @LocalDeploy({ "nuxeo.unzip.file.nuxeo-unzip-file-core:OSGI-INF/disable-listeners-contrib.xml" })
 public class TestUnzipFileToDocuments {
 
@@ -100,14 +98,12 @@ public class TestUnzipFileToDocuments {
         zipFile = FileUtils.getResourceFileFromContext(ZIPFILE);
         zipFileBlob = new FileBlob(zipFile);
 
-        testDocsFolder = coreSession.createDocumentModel("/", "test-unzip",
-                "Folder");
+        testDocsFolder = coreSession.createDocumentModel("/", "test-unzip", "Folder");
         testDocsFolder.setPropertyValue("dc:title", "test-pdfutils");
         testDocsFolder = coreSession.createDocument(testDocsFolder);
         testDocsFolder = coreSession.saveDocument(testDocsFolder);
 
-        documentWithZip = coreSession.createDocumentModel(
-                testDocsFolder.getPathAsString(), zipFile.getName(), "File");
+        documentWithZip = coreSession.createDocumentModel(testDocsFolder.getPathAsString(), zipFile.getName(), "File");
         documentWithZip.setPropertyValue("dc:title", zipFile.getName());
         documentWithZip.setPropertyValue("file:content", zipFileBlob);
         documentWithZip = coreSession.createDocument(documentWithZip);
@@ -149,8 +145,7 @@ public class TestUnzipFileToDocuments {
 
         DocumentModel mainUnzippedFolderDoc;
 
-        mainUnzippedFolderDoc = UnzipToDocuments.run(testDocsFolder,
-                zipFileBlob);
+        mainUnzippedFolderDoc = UnzipToDocuments.run(testDocsFolder, zipFileBlob);
         assertNotNull(mainUnzippedFolderDoc);
         assertEquals("nuxeo-unzip-test", mainUnzippedFolderDoc.getTitle());
 
@@ -175,8 +170,7 @@ public class TestUnzipFileToDocuments {
     }
 
     @Test
-    public void testOperationShouldFailWithBlobAndNoTarget()
-            throws OperationException {
+    public void testOperationShouldFailWithBlobAndNoTarget() throws OperationException {
 
         OperationChain chain;
         OperationContext ctx = new OperationContext(coreSession);
@@ -187,12 +181,17 @@ public class TestUnzipFileToDocuments {
         chain.add(UnzipFileFoDocumentsOp.ID);
         try {
             @SuppressWarnings("unused")
-            DocumentModel ignore = (DocumentModel) automationService.run(ctx,
-                    chain);
+            DocumentModel ignore = (DocumentModel) automationService.run(ctx, chain);
+            assertTrue("Should have thrown an exception", false);
         } catch (Exception e) {
             // Automation does not just forward the IllegalArgumentException, it
-            // is embedded in another exception
-            assertTrue(e.getMessage().indexOf("IllegalArgumentException") > -1);
+            // is embedded in another exception (OPeraitonException, so far)
+            // Can change with evolution of the platform, let's be cool with assertions
+            String cause, message;
+            cause = e.getCause().toString();
+            message = e.getMessage();
+            assertTrue(
+                    message.indexOf("IllegalArgumentException") > -1 || cause.indexOf("IllegalArgumentException") > -1);
         }
 
     }
@@ -211,7 +210,8 @@ public class TestUnzipFileToDocuments {
     @Test
     public void testImportViaFileManager() throws Exception {
 
-        DocumentModel doc = fileManager.createDocumentFromBlob(coreSession, zipFileBlob, testDocsFolder.getPathAsString(), true, "TheArchive");
+        DocumentModel doc = fileManager.createDocumentFromBlob(coreSession, zipFileBlob,
+                testDocsFolder.getPathAsString(), true, "TheArchive");
         assertTrue(doc != null);
         assertEquals("nuxeo-unzip-test", doc.getTitle());
 
