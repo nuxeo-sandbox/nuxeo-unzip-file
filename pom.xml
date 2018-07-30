@@ -18,9 +18,9 @@
     <module>nuxeo-unzip-file-core</module>
     <module>nuxeo-unzip-file-marketplace</module>
   </modules>
-
+  
   <properties>
-    <nuxeo.dam.nxr.version>6.3.3</nuxeo.dam.nxr.version>
+    <nuxeo.unzip-file.version>9.10-SNAPSHOT</nuxeo.unzip-file.version>
   </properties>
 
   <dependencyManagement>
@@ -28,12 +28,12 @@
       <dependency>
         <groupId>nuxeo.unzip.file</groupId>
         <artifactId>nuxeo-unzip-file-core</artifactId>
-        <version>${project.version}</version>
+        <version>${nuxeo.unzip-file.version}</version>
       </dependency>
       <dependency>
         <groupId>nuxeo.unzip.file</groupId>
         <artifactId>nuxeo-unzip-file-mp</artifactId>
-        <version>${project.version}</version>
+        <version>${nuxeo.unzip-file.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

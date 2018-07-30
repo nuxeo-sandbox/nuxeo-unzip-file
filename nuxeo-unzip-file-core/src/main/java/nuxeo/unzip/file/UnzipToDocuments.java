@@ -22,12 +22,16 @@ package nuxeo.unzip.file;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-
+import java.util.zip.ZipFile;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.common.Environment;
@@ -43,7 +47,7 @@ import org.nuxeo.runtime.api.Framework;
  * Creates Documents, in a hierarchical way, copying the tree-structure stored
  * in the zip file
  *
- * TODO: This code has room for optimization.
+ * TODO: This code has room for optimization, use of try-with-resource etc.
  *
  * @since 8.3
  */
@@ -71,6 +75,7 @@ public class UnzipToDocuments {
         boolean isMainUzippedFolderDoc = false;
 
         CoreSession session = parentDocument.getCoreSession();
+        FileManager fileManager = Framework.getService(FileManager.class);
 
         DocumentModel docFolder;
         try {
@@ -87,20 +92,30 @@ public class UnzipToDocuments {
             }
             mainParentFolderOnDisk = folder;
 
-            // get the zip file content
-            ZipInputStream zis = new ZipInputStream(zipBlob.getStream());
+            // We must order the zip by names (full path names), so we make sure we cill create
+            // the Container before trying to create their content. For example,, as the entries
+            // are ordered by hash, we may receive "folder1/file.txt" before receiving "folder1/"
+            // Using a TreeMap to order by name
+            File zipBlobFile = zipBlob.getFile();
+            ZipFile zipFile = new ZipFile(zipBlobFile);
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            Map<String, ZipEntry> entriesByName = new TreeMap<String, ZipEntry>();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                entriesByName.put(entry.getName(), entry);
+            }
 
-            // get the zipped file list entry
-            ZipEntry ze = zis.getNextEntry();
+            // Now, we can walk this tree
+            Iterator<ZipEntry> sortedEntries = entriesByName.values().iterator();
+            while(sortedEntries.hasNext()) {
+                ZipEntry entry = sortedEntries.next();
+                //logger.warn(entry.getName());
 
-            while (ze != null) {
-
-                String fileName = ze.getName();
+                String fileName = entry.getName();
                 if (fileName.startsWith("__MACOSX/")
                         || fileName.startsWith(".")
                         || fileName.contentEquals("../") //Avoid hacks trying to access a directory outside the current one
                         || fileName.endsWith(".DS_Store")) {
-                    ze = zis.getNextEntry();
                     continue;
                 }
 
@@ -108,7 +123,8 @@ public class UnzipToDocuments {
                 int idx = fileName.lastIndexOf("/");
                 String path = idx == -1 ? "" : fileName.substring(0, idx);
 
-                if (ze.isDirectory()) {
+                // Create the container (default is Folder)
+                if (entry.isDirectory()) {
 
                     if (path.indexOf("/") == -1) {
                         isMainUzippedFolderDoc = true;
@@ -133,29 +149,30 @@ public class UnzipToDocuments {
                         isMainUzippedFolderDoc = false;
                     }
 
-                    ze = zis.getNextEntry();
                     continue;
                 }
 
+                // If not a directory, create the file on disk then import it
+                // (and so, let Nuxeo and its configuration decide the type of doc. to create)
                 File newFile = new File(outDirPath.toString() + File.separator
                         + fileName);
                 FileOutputStream fos = new FileOutputStream(newFile);
-                while ((len = zis.read(buffer)) > 0) {
+                InputStream zipEntryStream = zipFile.getInputStream(entry);
+                while ((len = zipEntryStream.read(buffer)) > 0) {
                     fos.write(buffer, 0, len);
                 }
-
                 fos.close();
-                ze = zis.getNextEntry();
 
-                FileManager fileManager = Framework.getLocalService(FileManager.class);
+                // Import
                 FileBlob blob = new FileBlob(newFile);
                 fileManager.createDocumentFromBlob(session, blob,
                         parentDocument.getPathAsString() + "/" + path, true,
                         blob.getFilename());
-            }
 
-            zis.closeEntry();
-            zis.close();
+
+            } // while(sortedEntries.hasNext())
+
+            zipFile.close();
 
         } catch (IOException e) {
             throw new NuxeoException(

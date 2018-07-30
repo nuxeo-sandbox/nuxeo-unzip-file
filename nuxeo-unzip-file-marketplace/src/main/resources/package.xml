@@ -16,9 +16,8 @@
   <production-state>testing</production-state>
   <supported>false</supported>
   <platforms>
-    <platform>cap-@DISTRIB_VERSION@</platform>
-    <platform>cap-@DISTRIB_VERSION@-HF*</platform>
-    <platform>cap-8.3</platform>
+    <platform>server-@DISTRIB_VERSION@</platform>
+    <platform>server-@DISTRIB_VERSION@-HF</platform>
   </platforms>
   <!-- Dependencies on other packages -->
   <!-- <dependencies> -->
