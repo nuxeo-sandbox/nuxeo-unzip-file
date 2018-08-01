@@ -37,7 +37,7 @@ import org.nuxeo.ecm.core.api.DocumentRef;
  * hierarchy.
  *
  */
-@Operation(id = UnzipFileFoDocumentsOp.ID, category = Constants.CAT_DOCUMENT, label = "Unzip and create documents", description = "Unzip file and create the same structure in the target (the current folder if target isn't provided). When using a blob as input, the target parameter is required. The operation does nothing if the input is null.")
+@Operation(id = UnzipFileFoDocumentsOp.ID, category = Constants.CAT_DOCUMENT, label = "Unzip and create documents", description = "Unzip file and create the same structure in the target (the current folder if target isn't provided). When using a blob as input, the target parameter is required. The operation does nothing if the input is null. every commitModulo documents created, the transaction is commited.")
 public class UnzipFileFoDocumentsOp {
 
     public static final String ID = "Document.UnzipFileToDocuments";
@@ -50,6 +50,12 @@ public class UnzipFileFoDocumentsOp {
 
     @Param(name = "xpath", required = false, values = { "file:content" })
     protected String xpath;
+
+    @Param(name = "folderishType", required = false, values = { "Folder" })
+    protected String folderishType;
+
+    @Param(name = "commitModulo", required = false, values = { "100" })
+    protected Integer commitModulo;
 
     @OperationMethod
     public DocumentModel run(DocumentModel input) {
@@ -72,7 +78,7 @@ public class UnzipFileFoDocumentsOp {
         }
         Blob zipBlob = (Blob) input.getPropertyValue(xpath);
 
-        /* ignore = */UnzipToDocuments.run(parentDocument, zipBlob);
+        /* ignore = */UnzipToDocuments.run(parentDocument, zipBlob, folderishType, commitModulo == null ? 0 : commitModulo);
 
         return input;
     }
@@ -89,7 +95,7 @@ public class UnzipFileFoDocumentsOp {
                     "When receiving a Blob, the target parameter cannot be empty");
         }
 
-        /* ignore = */UnzipToDocuments.run(target, input);
+        /* ignore = */UnzipToDocuments.run(target, input, folderishType, commitModulo);
 
         return input;
     }

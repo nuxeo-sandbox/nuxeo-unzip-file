@@ -40,6 +40,9 @@ If you want to store your .zip files as regular `File` documents, and later mayb
 * When the input is a `Blob`:
   * The `target` parameter is required
   * `xpath` is ignored
+* Other parameters:
+  * `folderishType`: The document type to used when creating a folderish (default: `Folder`)
+  * `commitModulo` (default value: 100): When the zip archive contains thousands of documents, the transaction will be commited/started every  `commitModulo` created. This will avoid long running transaction that any database hates, most often generating a "transaction timeout" error cacelling the whole process.
 
 
 

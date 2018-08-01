@@ -96,7 +96,7 @@ public class UnzipFileToDocumentsImporter extends AbstractFileImporter {
             if (looksLikeValidZip(source.getFile())) {
                 DocumentModel parent = documentManager.getDocument(new PathRef(
                         path));
-                mainFolderDoc = UnzipToDocuments.run(parent, content);
+                mainFolderDoc = UnzipToDocuments.run(parent, content, null, 0);
             }
         }
 

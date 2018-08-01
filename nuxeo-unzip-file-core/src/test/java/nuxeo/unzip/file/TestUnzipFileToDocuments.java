@@ -145,7 +145,7 @@ public class TestUnzipFileToDocuments {
 
         DocumentModel mainUnzippedFolderDoc;
 
-        mainUnzippedFolderDoc = UnzipToDocuments.run(testDocsFolder, zipFileBlob);
+        mainUnzippedFolderDoc = UnzipToDocuments.run(testDocsFolder, zipFileBlob, null, 0);
         assertNotNull(mainUnzippedFolderDoc);
         assertEquals("nuxeo-unzip-test", mainUnzippedFolderDoc.getTitle());
 

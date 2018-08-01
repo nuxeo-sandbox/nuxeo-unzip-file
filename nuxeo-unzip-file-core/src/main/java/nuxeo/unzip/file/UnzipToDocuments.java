@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.common.Environment;
@@ -42,6 +44,7 @@ import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.platform.filemanager.api.FileManager;
 import org.nuxeo.runtime.api.Framework;
+import org.nuxeo.runtime.transaction.TransactionHelper;
 
 /**
  * Creates Documents, in a hierarchical way, copying the tree-structure stored
@@ -55,6 +58,10 @@ public class UnzipToDocuments {
 
     protected static Log logger = LogFactory.getLog(UnzipToDocuments.class);
 
+    public static String DEFAULT_FOLDERISH_TYPE = "Folder";
+
+    public static int DEFAULT_COMMIT_MODULO = 100;
+
     /**
      * Unzip the file and creates the Documents
      *
@@ -63,7 +70,7 @@ public class UnzipToDocuments {
      * @return the main document (Folder) containing the unzipped data
      * @since 8.3
      */
-    public static DocumentModel run(DocumentModel parentDocument, Blob zipBlob)
+    public static DocumentModel run(DocumentModel parentDocument, Blob zipBlob, String folderishType, int commitModulo)
             throws NuxeoException {
 
         String tmpDir = Environment.getDefault().getTemp().getPath();
@@ -77,6 +84,14 @@ public class UnzipToDocuments {
         CoreSession session = parentDocument.getCoreSession();
         FileManager fileManager = Framework.getService(FileManager.class);
 
+        // Realign parameters
+        if (StringUtils.isBlank(folderishType)) {
+            folderishType = DEFAULT_FOLDERISH_TYPE;
+        }
+        if(commitModulo <= 0) {
+            commitModulo = DEFAULT_COMMIT_MODULO;
+        }
+
         DocumentModel docFolder;
         try {
             outDirPath = tmpDirPath != null ? Files.createTempDirectory(
@@ -84,6 +99,7 @@ public class UnzipToDocuments {
                     : Framework.createTempDirectory(null);
             byte[] buffer = new byte[4096];
             int len = 0;
+            int count = 0;
 
             // create output directory if it doesn't exist
             File folder = new File(outDirPath.toString());
@@ -143,6 +159,12 @@ public class UnzipToDocuments {
                     docFolder.setProperty("dublincore", "title", dcTitle);
                     docFolder = session.createDocument(docFolder);
                     session.saveDocument(docFolder);
+
+                    count += 1;
+                    if((count % commitModulo) == 0) {
+                        TransactionHelper.commitOrRollbackTransaction();
+                        TransactionHelper.startTransaction();
+                    }
 
                     if (isMainUzippedFolderDoc && mainUnzippedFolderDoc == null) {
                         mainUnzippedFolderDoc = docFolder;
