@@ -155,7 +155,7 @@ public class UnzipToDocuments {
 
                     docFolder = session.createDocumentModel(
                             parentDocument.getPathAsString() + "/" + path,
-                            dcTitle, "Folder");
+                            dcTitle, folderishType);
                     docFolder.setProperty("dublincore", "title", dcTitle);
                     docFolder = session.createDocument(docFolder);
                     session.saveDocument(docFolder);
