@@ -160,12 +160,6 @@ public class UnzipToDocuments {
                     docFolder = session.createDocument(docFolder);
                     session.saveDocument(docFolder);
 
-                    count += 1;
-                    if((count % commitModulo) == 0) {
-                        TransactionHelper.commitOrRollbackTransaction();
-                        TransactionHelper.startTransaction();
-                    }
-
                     if (isMainUzippedFolderDoc && mainUnzippedFolderDoc == null) {
                         mainUnzippedFolderDoc = docFolder;
                         isMainUzippedFolderDoc = false;
@@ -191,6 +185,11 @@ public class UnzipToDocuments {
                         parentDocument.getPathAsString() + "/" + path, true,
                         blob.getFilename());
 
+                count += 1;
+                if((count % commitModulo) == 0) {
+                    TransactionHelper.commitOrRollbackTransaction();
+                    TransactionHelper.startTransaction();
+                }
 
             } // while(sortedEntries.hasNext())
 
