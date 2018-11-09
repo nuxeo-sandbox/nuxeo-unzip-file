@@ -1,5 +1,6 @@
 # nuxeo-unzip-file
-====
+
+[![Build Status](https://qa.nuxeo.org/jenkins/buildStatus/icon?job=Sandbox/sandbox_nuxeo-unzip-file-master)](https://qa.nuxeo.org/jenkins/job/Sandbox/job/sandbox_nuxeo-unzip-file-master/)
 
 This add-on for [Nuxeo platform](http://www.nuxeo.com) extracts a .zip file and creates the corresponding Documents, building the same tree structure.
 
