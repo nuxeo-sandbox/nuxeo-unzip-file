@@ -4,10 +4,10 @@
   <parent>
     <groupId>nuxeo.unzip.file</groupId>
     <artifactId>nuxeo-unzip-file-parent</artifactId>
-    <version>9.10-SNAPSHOT</version>
+    <version>10.10-SNAPSHOT</version>
   </parent>
 
-  <artifactId>nuxeo-unzip-file-mp</artifactId>
+  <artifactId>nuxeo-unzip-file-marketplace</artifactId>
   <packaging>zip</packaging>
   <name>Nuxeo unzip file package</name>
 

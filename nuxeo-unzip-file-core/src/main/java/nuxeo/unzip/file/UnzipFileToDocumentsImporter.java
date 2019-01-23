@@ -18,21 +18,18 @@
  */
 package nuxeo.unzip.file;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
-
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CloseableFile;
-import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
+import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.PathRef;
+import org.nuxeo.ecm.platform.filemanager.api.FileImporterContext;
 import org.nuxeo.ecm.platform.filemanager.service.extension.AbstractFileImporter;
-import org.nuxeo.ecm.platform.types.TypeManager;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.zip.ZipFile;
 
 /**
  * Unzips a file that contains a tree structure of files and creates documents
@@ -58,46 +55,32 @@ public class UnzipFileToDocumentsImporter extends AbstractFileImporter {
      * Checks if the file may be a zip archive
      *
      * @param file
-     * @return true is the file is not null and looks valid (just checking
-     *         headers)
+     * @return true is the file is not null and looks valid (just checking headers)
      * @since 8.3
      */
     public static boolean looksLikeValidZip(File file) {
-
-        if(file == null) {
+        try (ZipFile zip = new ZipFile(file)) {
+            return true;
+        } catch (IOException e) {
             return false;
         }
-
-        ZipFile zip = null;
-        boolean looksValid = false;
-        try {
-            zip = new ZipFile(file);
-            looksValid = true;
-        } catch (ZipException e) {
-            // Ignore
-        } catch (IOException e) {
-            // Ignore
-        } finally {
-            IOUtils.closeQuietly(zip);
-        }
-
-        return looksValid;
-
     }
 
     @Override
-    public DocumentModel create(CoreSession documentManager, Blob content,
-            String path, boolean overwrite, String filename,
-            TypeManager typeService) throws IOException {
+    public DocumentModel createOrUpdate(FileImporterContext context) {
 
         DocumentModel mainFolderDoc = null;
 
-        try (CloseableFile source = content.getCloseableFile()) {
+        try (CloseableFile source = context.getBlob().getCloseableFile()) {
             if (looksLikeValidZip(source.getFile())) {
-                DocumentModel parent = documentManager.getDocument(new PathRef(
-                        path));
-                mainFolderDoc = UnzipToDocuments.run(parent, content, null, 0);
+                DocumentModel parent = context.getSession().getDocument(
+                        new PathRef(
+                        context.getParentPath()));
+                mainFolderDoc = UnzipToDocuments.run(
+                        parent, context.getBlob(), null, 0);
             }
+        } catch (IOException e) {
+            throw new NuxeoException(e);
         }
 
         return mainFolderDoc;

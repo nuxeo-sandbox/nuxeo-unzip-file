@@ -4,12 +4,12 @@
   <parent>
     <groupId>org.nuxeo.ecm.distribution</groupId>
     <artifactId>nuxeo-distribution</artifactId>
-    <version>9.10</version>
+    <version>10.10</version>
   </parent>
 
   <groupId>nuxeo.unzip.file</groupId>
   <artifactId>nuxeo-unzip-file-parent</artifactId>
-  <version>9.10-SNAPSHOT</version>
+  <version>10.10-SNAPSHOT</version>
   <name>Nuxeo unzip file parent</name>
   <description>Unzip file and create the folder structure.</description>
   <packaging>pom</packaging>
@@ -20,7 +20,7 @@
   </modules>
   
   <properties>
-    <nuxeo.unzip-file.version>9.10-SNAPSHOT</nuxeo.unzip-file.version>
+    <nuxeo.unzip-file.version>10.10-SNAPSHOT</nuxeo.unzip-file.version>
   </properties>
 
   <dependencyManagement>
@@ -32,7 +32,7 @@
       </dependency>
       <dependency>
         <groupId>nuxeo.unzip.file</groupId>
-        <artifactId>nuxeo-unzip-file-mp</artifactId>
+        <artifactId>nuxeo-unzip-file-marketplace</artifactId>
         <version>${nuxeo.unzip-file.version}</version>
       </dependency>
     </dependencies>
