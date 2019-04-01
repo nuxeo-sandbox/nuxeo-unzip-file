@@ -19,6 +19,20 @@
  */
 package nuxeo.unzip.file;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.nuxeo.common.Environment;
+import org.nuxeo.ecm.core.api.Blob;
+import org.nuxeo.ecm.core.api.CoreSession;
+import org.nuxeo.ecm.core.api.DocumentModel;
+import org.nuxeo.ecm.core.api.NuxeoException;
+import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
+import org.nuxeo.ecm.platform.filemanager.api.FileImporterContext;
+import org.nuxeo.ecm.platform.filemanager.api.FileManager;
+import org.nuxeo.runtime.api.Framework;
+import org.nuxeo.runtime.transaction.TransactionHelper;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,19 +46,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.nuxeo.common.Environment;
-import org.nuxeo.ecm.core.api.Blob;
-import org.nuxeo.ecm.core.api.CoreSession;
-import org.nuxeo.ecm.core.api.DocumentModel;
-import org.nuxeo.ecm.core.api.NuxeoException;
-import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
-import org.nuxeo.ecm.platform.filemanager.api.FileManager;
-import org.nuxeo.runtime.api.Framework;
-import org.nuxeo.runtime.transaction.TransactionHelper;
 
 /**
  * Creates Documents, in a hierarchical way, copying the tree-structure stored
@@ -181,9 +182,12 @@ public class UnzipToDocuments {
 
                 // Import
                 FileBlob blob = new FileBlob(newFile);
-                fileManager.createDocumentFromBlob(session, blob,
-                        parentDocument.getPathAsString() + "/" + path, true,
-                        blob.getFilename());
+                FileImporterContext context = FileImporterContext.builder(session,
+                        blob, parentDocument.getPathAsString() + "/" + path)
+                        .overwrite(true)
+                        .fileName(blob.getFilename())
+                        .build();
+                fileManager.createOrUpdateDocument(context);
 
                 count += 1;
                 if((count % commitModulo) == 0) {
