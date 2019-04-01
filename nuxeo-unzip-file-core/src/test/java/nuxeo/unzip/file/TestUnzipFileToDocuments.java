@@ -58,8 +58,7 @@ import static org.junit.Assert.*;
 @Deploy({
     "org.nuxeo.ecm.platform.filemanager.core",
     "org.nuxeo.ecm.platform.types.core",
-    "nuxeo.unzip.file.nuxeo-unzip-file-core",
-    "nuxeo.unzip.file.nuxeo-unzip-file-core:OSGI-INF/disable-listeners-contrib.xml"
+    "nuxeo.unzip.file.nuxeo-unzip-file-core"
 })
 public class TestUnzipFileToDocuments {
 
